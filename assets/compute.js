@@ -351,9 +351,10 @@ const Compute = {
         const totalProduction = data.reduce((sum, d) => sum + d.output, 0);
         const effectiveCapturePrice = totalProduction > 0 ? newRevenue / totalProduction : 0;
 
-        // Negative exposure reduction
-        const negativeReduction = totalNegativeAvoided > 0 ?
-            (totalNegativeAvoided / data.filter(d => d.price < 0 && d.output > 0).reduce((s, d) => s + d.output, 0)) * 100 : 0;
+        // Negative exposure reduction (with safe division)
+        const totalNegativeOutput = data.filter(d => d.price < 0 && d.output > 0).reduce((s, d) => s + d.output, 0);
+        const negativeReduction = (totalNegativeAvoided > 0 && totalNegativeOutput > 0) ?
+            (totalNegativeAvoided / totalNegativeOutput) * 100 : 0;
 
         return {
             totalUplift: Math.round(totalUplift),
