@@ -1,1 +1,698 @@
-Test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVA | IPP Revenue & Capture Lab (Demo)</title>
+    <meta name="description" content="Capture price intelligence + flexibility what-if, powered by market data.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <canvas id="energy-mesh"></canvas>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero">
+        <div class="hero-content">
+            <div class="brand-badge">
+                <span class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                </span>
+                <span>CVA Energy Analytics</span>
+            </div>
+            <h1 class="hero-title">IPP Revenue & Capture Lab</h1>
+            <p class="hero-subtitle">Capture price intelligence + flexibility what-if, powered by market data.</p>
+            <p class="hero-desc">Analyze your PV asset's exposure to price cannibalization, negative price hours, and evaluate battery co-location value — all in under 3 minutes.</p>
+            <button id="start-btn" class="btn-primary">
+                <span>Start Analysis</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </button>
+            <div class="hero-features">
+                <div class="feature-tag">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    <span>Real-time market data</span>
+                </div>
+                <div class="feature-tag">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M3 9h18M9 21V9"/>
+                    </svg>
+                    <span>Battery what-if</span>
+                </div>
+                <div class="feature-tag">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+                    </svg>
+                    <span>AI executive memo</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Wizard Section -->
+    <section id="wizard" class="wizard hidden">
+        <div class="wizard-container">
+            <div class="wizard-header">
+                <h2>Configure Your Analysis</h2>
+                <div class="wizard-steps">
+                    <div class="step active" data-step="1">
+                        <span class="step-number">1</span>
+                        <span class="step-label">Market & Asset</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <span class="step-number">2</span>
+                        <span class="step-label">Contracting</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <span class="step-number">3</span>
+                        <span class="step-label">Flexibility</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 1: Market & Asset -->
+            <div class="wizard-step active" id="step-1">
+                <div class="step-content">
+                    <h3>Market & Asset Configuration</h3>
+
+                    <div class="form-group">
+                        <label for="market">Bidding Zone</label>
+                        <select id="market" class="form-select">
+                            <option value="DE-LU" selected>DE-LU (Germany-Luxembourg)</option>
+                        </select>
+                        <span class="form-hint">MVP: German market only. Extension to other zones coming soon.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="technology">Technology</label>
+                        <select id="technology" class="form-select">
+                            <option value="solar" selected>Solar PV</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="capacity">Installed Capacity</label>
+                        <div class="input-with-unit">
+                            <input type="range" id="capacity-slider" min="1" max="500" value="50" class="form-range">
+                            <div class="input-group">
+                                <input type="number" id="capacity" value="50" min="1" max="500" class="form-input">
+                                <span class="input-unit">MW</span>
+                            </div>
+                        </div>
+                        <span class="capacity-display">50 MW</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cod">COD Year (optional)</label>
+                        <input type="number" id="cod" placeholder="e.g., 2023" min="2015" max="2030" class="form-input">
+                        <span class="form-hint">Commercial Operation Date — for context framing.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Analysis Period</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="period" value="12" checked>
+                                <span class="radio-mark"></span>
+                                <span>Last 12 months</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="period" value="24">
+                                <span class="radio-mark"></span>
+                                <span>Last 24 months</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="period" value="custom">
+                                <span class="radio-mark"></span>
+                                <span>Custom range</span>
+                            </label>
+                        </div>
+                        <div id="custom-dates" class="custom-dates hidden">
+                            <input type="date" id="date-start" class="form-input">
+                            <span>to</span>
+                            <input type="date" id="date-end" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="demo-mode" checked>
+                            <span class="toggle-switch"></span>
+                            <span>Demo Mode (use sample data if API fails)</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn-secondary" id="back-to-hero">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button class="btn-primary" data-next="2">
+                        Next: Contracting
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Contracting -->
+            <div class="wizard-step" id="step-2">
+                <div class="step-content">
+                    <h3>Contracting Baseline</h3>
+                    <p class="step-desc">Define your route-to-market assumption for the analysis.</p>
+
+                    <div class="form-group">
+                        <label>Route-to-Market</label>
+                        <div class="card-select">
+                            <label class="card-option selected">
+                                <input type="radio" name="rtm" value="merchant" checked>
+                                <div class="card-content">
+                                    <div class="card-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M3 3v18h18"/>
+                                            <path d="M18 17V9M13 17V5M8 17v-3"/>
+                                        </svg>
+                                    </div>
+                                    <div class="card-text">
+                                        <strong>Merchant (Spot Indexed)</strong>
+                                        <span>Full exposure to day-ahead prices</span>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="card-option">
+                                <input type="radio" name="rtm" value="ppa">
+                                <div class="card-content">
+                                    <div class="card-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                            <path d="M3 9h18M9 21V9"/>
+                                        </svg>
+                                    </div>
+                                    <div class="card-text">
+                                        <strong>Fixed PPA Proxy</strong>
+                                        <span>Compare against a fixed price benchmark</span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="ppa-config" class="form-group hidden">
+                        <label for="ppa-price">Fixed PPA Price</label>
+                        <div class="input-group">
+                            <input type="number" id="ppa-price" value="70" step="0.1" class="form-input">
+                            <span class="input-unit">EUR/MWh</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="use-floor">
+                            <span class="toggle-switch"></span>
+                            <span>Apply price floor (downside protection)</span>
+                        </label>
+                    </div>
+
+                    <div id="floor-config" class="form-group hidden">
+                        <label for="floor-price">Floor Price</label>
+                        <div class="input-group">
+                            <input type="number" id="floor-price" value="0" step="0.1" class="form-input">
+                            <span class="input-unit">EUR/MWh</span>
+                        </div>
+                        <span class="form-hint">Illustrative — models a minimum price guarantee.</span>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn-secondary" data-prev="1">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button class="btn-primary" data-next="3">
+                        Next: Flexibility
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Flexibility (Battery) -->
+            <div class="wizard-step" id="step-3">
+                <div class="step-content">
+                    <h3>Flexibility Option — Battery What-If</h3>
+                    <p class="step-desc">Model a co-located battery to evaluate shape-shifting value.</p>
+
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="enable-battery" checked>
+                            <span class="toggle-switch"></span>
+                            <span>Enable Battery Simulation</span>
+                        </label>
+                    </div>
+
+                    <div id="battery-config">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="battery-power">Battery Power</label>
+                                <div class="input-group">
+                                    <input type="number" id="battery-power" value="25" min="1" max="500" class="form-input">
+                                    <span class="input-unit">MW</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="battery-energy">Battery Energy</label>
+                                <div class="input-group">
+                                    <input type="number" id="battery-energy" value="50" min="1" max="2000" class="form-input">
+                                    <span class="input-unit">MWh</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="efficiency">Round-Trip Efficiency</label>
+                            <div class="input-with-unit">
+                                <input type="range" id="efficiency-slider" min="70" max="98" value="88" class="form-range">
+                                <div class="input-group">
+                                    <input type="number" id="efficiency" value="88" min="70" max="98" class="form-input">
+                                    <span class="input-unit">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="one-cycle" checked>
+                                <span class="toggle-switch"></span>
+                                <span>Limit to 1 cycle per day</span>
+                            </label>
+                            <span class="form-hint">Extends battery life, may reduce arbitrage potential.</span>
+                        </div>
+
+                        <div class="info-box">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 16v-4M12 8h.01"/>
+                            </svg>
+                            <div>
+                                <strong>Simulation Objective</strong>
+                                <p>Maximize day-ahead revenue by charging during low-price PV hours and discharging during peak prices.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button class="btn-secondary" data-prev="2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back
+                    </button>
+                    <button class="btn-primary" id="run-analysis">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        Run Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results" class="results hidden">
+        <div class="results-container">
+            <!-- Left Rail - Controls -->
+            <aside class="control-panel">
+                <div class="panel-header">
+                    <h3>Analysis Parameters</h3>
+                    <button id="edit-params" class="btn-icon" title="Edit parameters">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="param-summary">
+                    <div class="param-item">
+                        <span class="param-label">Market</span>
+                        <span class="param-value" id="summary-market">DE-LU</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Capacity</span>
+                        <span class="param-value" id="summary-capacity">50 MW</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Period</span>
+                        <span class="param-value" id="summary-period">Last 12 months</span>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-label">Route</span>
+                        <span class="param-value" id="summary-route">Merchant</span>
+                    </div>
+                </div>
+
+                <div class="scenario-toggles">
+                    <h4>Scenario Toggles</h4>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-battery" checked>
+                        <span class="toggle-switch"></span>
+                        <span>Show Battery Impact</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="toggle-ppa-compare">
+                        <span class="toggle-switch"></span>
+                        <span>Compare with PPA</span>
+                    </label>
+                </div>
+
+                <div class="pv-profile-toggle">
+                    <h4>PV Profile Source</h4>
+                    <div class="radio-group-small">
+                        <label class="radio-option-small">
+                            <input type="radio" name="pv-source" value="synthetic" checked>
+                            <span>Synthetic</span>
+                        </label>
+                        <label class="radio-option-small">
+                            <input type="radio" name="pv-source" value="pvgis">
+                            <span>PVGIS (beta)</span>
+                        </label>
+                    </div>
+                    <span class="form-hint warning" id="pv-warning"></span>
+                </div>
+
+                <div class="data-sources">
+                    <h4>Data Sources</h4>
+                    <div class="source-badge">
+                        <span class="source-icon live"></span>
+                        <span>Day-ahead: Energy-Charts / SMARD</span>
+                    </div>
+                    <div class="source-badge">
+                        <span class="source-icon synthetic"></span>
+                        <span>PV Profile: Synthetic model</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="results-main">
+                <!-- KPI Strip -->
+                <div class="kpi-strip">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Baseload Avg Price</span>
+                            <span class="kpi-info" title="Simple average of all hourly prices">i</span>
+                        </div>
+                        <div class="kpi-value skeleton" id="kpi-baseload">--</div>
+                        <div class="kpi-unit">EUR/MWh</div>
+                        <div class="kpi-sparkline" id="spark-baseload"></div>
+                    </div>
+                    <div class="kpi-card highlight">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Capture Price</span>
+                            <span class="kpi-info" title="Production-weighted average price">i</span>
+                        </div>
+                        <div class="kpi-value skeleton" id="kpi-capture">--</div>
+                        <div class="kpi-unit">EUR/MWh</div>
+                        <div class="kpi-sparkline" id="spark-capture"></div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Capture Rate</span>
+                            <span class="kpi-info" title="Capture Price / Baseload Price">i</span>
+                        </div>
+                        <div class="kpi-value skeleton" id="kpi-rate">--</div>
+                        <div class="kpi-unit">%</div>
+                        <div class="kpi-trend" id="trend-rate"></div>
+                    </div>
+                    <div class="kpi-card warning">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Negative Hours</span>
+                            <span class="kpi-info" title="Hours with price < 0 during production">i</span>
+                        </div>
+                        <div class="kpi-value skeleton" id="kpi-neghours">--</div>
+                        <div class="kpi-unit">hours</div>
+                        <div class="kpi-sub" id="kpi-negpct">--% of production</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Merchant Revenue</span>
+                            <span class="kpi-info" title="Total revenue at spot prices">i</span>
+                        </div>
+                        <div class="kpi-value skeleton" id="kpi-revenue">--</div>
+                        <div class="kpi-unit">kEUR</div>
+                    </div>
+                    <div class="kpi-card battery-kpi" id="battery-uplift-card">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Battery Uplift</span>
+                            <span class="kpi-info" title="Additional revenue from battery arbitrage">i</span>
+                        </div>
+                        <div class="kpi-value skeleton positive" id="kpi-uplift">--</div>
+                        <div class="kpi-unit">kEUR</div>
+                        <div class="kpi-sub" id="kpi-uplift-pct">+--% revenue</div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-card wide">
+                        <div class="chart-header">
+                            <h4>Price vs PV Output — Representative Week</h4>
+                            <div class="chart-actions">
+                                <select id="week-select" class="form-select-small">
+                                    <option value="typical">Most Typical</option>
+                                    <option value="volatile">Most Volatile</option>
+                                    <option value="negative">Most Negative Hours</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-overlay"></canvas>
+                            <div class="chart-skeleton"></div>
+                        </div>
+                        <div class="chart-footer">
+                            <span class="data-badge">Source: Energy-Charts (SMARD) + Synthetic PV</span>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h4>Monthly Capture Rate Trend</h4>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-capture-trend"></canvas>
+                            <div class="chart-skeleton"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h4>Price Distribution</h4>
+                            <div class="chart-legend-inline">
+                                <span class="legend-item"><span class="dot all"></span>All hours</span>
+                                <span class="legend-item"><span class="dot pv"></span>PV hours</span>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-distribution"></canvas>
+                            <div class="chart-skeleton"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card wide">
+                        <div class="chart-header">
+                            <h4>Negative Price Heatmap</h4>
+                            <span class="chart-subtitle">Hours with price &lt; 0 during PV production</span>
+                        </div>
+                        <div class="chart-container heatmap-container">
+                            <div id="chart-heatmap" class="heatmap"></div>
+                            <div class="chart-skeleton"></div>
+                        </div>
+                        <div class="heatmap-legend">
+                            <span>0</span>
+                            <div class="legend-gradient"></div>
+                            <span id="heatmap-max">10+ hrs</span>
+                        </div>
+                    </div>
+
+                    <div class="chart-card battery-chart" id="battery-chart-card">
+                        <div class="chart-header">
+                            <h4>Battery Impact Analysis</h4>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-battery"></canvas>
+                            <div class="chart-skeleton"></div>
+                        </div>
+                        <div class="battery-summary">
+                            <div class="battery-stat">
+                                <span class="stat-label">Shifted MWh</span>
+                                <span class="stat-value" id="battery-shifted">--</span>
+                            </div>
+                            <div class="battery-stat">
+                                <span class="stat-label">Neg. Exposure Reduction</span>
+                                <span class="stat-value positive" id="battery-neg-reduction">--%</span>
+                            </div>
+                            <div class="battery-stat">
+                                <span class="stat-label">Effective Capture Price</span>
+                                <span class="stat-value" id="battery-eff-capture">-- EUR/MWh</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Distribution -->
+                <div class="risk-section">
+                    <h4>Revenue Distribution (Monthly)</h4>
+                    <div class="risk-stats">
+                        <div class="risk-stat">
+                            <span class="risk-label">P5 (Downside)</span>
+                            <span class="risk-value negative" id="risk-p5">--</span>
+                        </div>
+                        <div class="risk-stat highlight">
+                            <span class="risk-label">P50 (Median)</span>
+                            <span class="risk-value" id="risk-p50">--</span>
+                        </div>
+                        <div class="risk-stat">
+                            <span class="risk-label">P95 (Upside)</span>
+                            <span class="risk-value positive" id="risk-p95">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Memo Section -->
+                <div class="memo-section">
+                    <div class="memo-header">
+                        <div class="memo-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+                            </svg>
+                            <h4>Executive Summary</h4>
+                            <span class="ai-badge">AI-Generated</span>
+                        </div>
+                        <button id="refresh-memo" class="btn-icon" title="Regenerate memo">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 4v6h-6M1 20v-6h6"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="memo-content" id="memo-content">
+                        <div class="memo-skeleton">
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line short"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-line"></div>
+                        </div>
+                    </div>
+                    <div class="memo-disclaimer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <span>This analysis is illustrative and hypothesis-based. Not financial advice. Verify assumptions before decision-making.</span>
+                    </div>
+                </div>
+
+                <!-- Export Section -->
+                <div class="export-section">
+                    <h4>Export Results</h4>
+                    <div class="export-buttons">
+                        <button id="export-pdf" class="btn-secondary">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/>
+                            </svg>
+                            Download Summary (PDF)
+                        </button>
+                        <button id="export-csv" class="btn-secondary">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+                            </svg>
+                            Download Metrics (CSV)
+                        </button>
+                        <button id="copy-memo" class="btn-secondary">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            Copy Memo
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Analyzing Market Data</h3>
+            <p class="loading-status">Fetching day-ahead prices...</p>
+            <div class="loading-progress">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="brand-icon small">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                </span>
+                <span>CVA | IPP Revenue & Capture Lab</span>
+            </div>
+            <div class="footer-info">
+                <span>Demo Version</span>
+                <span class="separator">|</span>
+                <span>Data: <a href="https://energy-charts.info" target="_blank" rel="noopener">Energy-Charts</a> (CC BY 4.0)</span>
+                <span class="separator">|</span>
+                <span>For illustrative purposes only</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/constants.js"></script>
+    <script src="assets/data_sources.js"></script>
+    <script src="assets/compute.js"></script>
+    <script src="assets/charts.js"></script>
+    <script src="assets/prompt_templates.js"></script>
+    <script src="assets/ui.js"></script>
+    <script src="assets/app.js"></script>
+</body>
+</html>
