@@ -1,0 +1,32 @@
+# Cloudflare Worker Configuration
+# CVA IPP Revenue & Capture Lab - OpenAI Proxy
+
+name = "cva-ipp-insights-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# Routes (uncomment and configure when you have a custom domain)
+# routes = [
+#   { pattern = "api.yourdomain.com/*", zone_name = "yourdomain.com" }
+# ]
+
+# Environment variables (secrets should be set via wrangler secret put)
+# DO NOT put your actual API key here - use: wrangler secret put OPENAI_API_KEY
+[vars]
+ENVIRONMENT = "production"
+
+# Development settings
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Deployment environments
+[env.staging]
+name = "cva-ipp-insights-api-staging"
+[env.staging.vars]
+ENVIRONMENT = "staging"
+
+[env.production]
+name = "cva-ipp-insights-api"
+[env.production.vars]
+ENVIRONMENT = "production"
